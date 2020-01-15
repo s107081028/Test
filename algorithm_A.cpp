@@ -1,10 +1,8 @@
 #include <iostream>
-#include <stdlib.h>
 #include <time.h>
 #include "../include/rules.h"
 #include "../include/algorithm.h"
 using namespace std;
-
 /******************************************************
  * In your algorithm, you can just use the the funcitons
  * listed by TA to get the board information.(functions
@@ -12,7 +10,6 @@ using namespace std;
  *
  * The STL library functions is not allowed to use.
 ******************************************************/
-
 /*************************************************************************
  * 1. int board.get_orbs_num(int row_index, int col_index)
  * 2. int board.get_capacity(int row_index, int col_index)
@@ -27,7 +24,6 @@ using namespace std;
 int score(Board board, char color)
 {
     int Score = 0, sameorb = 0, enemyorb = 0, contiguous = 0;
-    //cout<<"1111\n";
     for(int i = 0; i < ROW; i++)
     {
         for(int j = 0; j < COL; j++)
@@ -52,7 +48,6 @@ int score(Board board, char color)
                     if(board.get_orbs_num(i, j) == board.get_capacity(i, j) - 1) Score += 2;
                 }
             }else if(board.get_cell_color(i, j) != 'w') enemyorb += board.get_orbs_num(i, j);
-            //cout<<i<<" 2222 "<<j<<'\n';
         }
     }
     Score += sameorb;
@@ -61,15 +56,17 @@ int score(Board board, char color)
     if(contiguous != 0) Score += contiguous + 2;
     return Score;
 }
-int minimax(Board board, int depth, bool isMaximizing, char color, Player *player)
+int minimax(Board board, int depth, bool isMaximizing, int alpha, int beta, char color, Player *player)
 {
-    if(depth == 3  || board.win_the_game(*player) || board.win_the_game(newplayer))
+    char enemycolor;
+    (color == 'b') ? enemycolor = 'r' : enemycolor = 'b';
+    Player newplayer(enemycolor);
+    if(depth == 5  || board.win_the_game(*player) || board.win_the_game(newplayer))
     {
-        return score1(board, color);
+        return score(board, color);
     }
     if(isMaximizing)
     {
-        //cout<<"00\n";
         int bestscore = -100000;
         for(int i = 0; i < ROW; i++)
         {
@@ -81,17 +78,14 @@ int minimax(Board board, int depth, bool isMaximizing, char color, Player *playe
                     newboard.place_orb(i, j, player);
                     int Score = minimax(newboard, depth + 1, !isMaximizing, alpha, beta, color, player);
                     (Score > bestscore) ? bestscore = Score : bestscore = bestscore;
-
+                    (Score > alpha) ? alpha = Score : alpha = alpha;
+                    if(beta <= alpha) break;
                 }
             }
         }
         return bestscore;
     }else
     {
-        //cout<<"000\n";
-        char enemycolor;
-        (color == 'b') ? enemycolor = 'r' : enemycolor = 'b';
-        Player newplayer(enemycolor);
         int bestscore = 100000;
         for(int i = 0; i < ROW; i++)
         {
@@ -103,6 +97,8 @@ int minimax(Board board, int depth, bool isMaximizing, char color, Player *playe
                     newboard.place_orb(i, j, &newplayer);
                     int Score = minimax(newboard, depth + 1, !isMaximizing, alpha, beta, color, player);
                     (Score < bestscore) ? bestscore = Score : bestscore = bestscore;
+                    (Score < beta) ? beta = Score : beta = beta;
+                    if(beta <= alpha) break;
                 }
             }
         }
@@ -110,27 +106,17 @@ int minimax(Board board, int depth, bool isMaximizing, char color, Player *playe
     }
 }
 void algorithm_A(Board board, Player player, int index[]){
-
-    // cout << board.get_capacity(0, 0) << endl;
-    // cout << board.get_orbs_num(0, 0) << endl;
-    // cout << board.get_cell_color(0, 0) << endl;
-    // board.print_current_board(0, 0, 0);
-
-    //////////// Random Algorithm ////////////
-    // Here is the random algorithm for your reference, you can delete or comment it.
     int bestscore = -10001, besti = 0, bestj = 0;
-    //cout<<"0000\n";
     char color = player.get_color();
     for(int i = 0; i < ROW; i++)
     {
         for(int j = 0; j < COL; j++)
         {
-            //cout<<"000000\n";
             if(board.get_cell_color(i, j) == 'w' || board.get_cell_color(i, j) == player.get_color())
             {
                 Board newboard = board;
                 newboard.place_orb(i, j, &player);
-                int score = minimaxx(newboard, 1, false, color, &player);
+                int score = minimax(newboard, 1, false, -10001, 100001, color, &player);
                 if( score > bestscore)
                 {
                     bestscore = score;
